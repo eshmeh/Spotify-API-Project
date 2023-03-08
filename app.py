@@ -156,6 +156,36 @@ def getPlaylists():
     return html_file3
 
 
+@app.route('/getAlbums')
+def getAlbums():
+    session['token_info'], authorized = get_token()
+    session.modified = True
+    if not authorized:
+        return redirect('/')
+    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    results = []
+    iter = 0
+    while True:
+        offset = iter * 50
+        iter += 1
+        curGroup = sp.current_user_saved_albums(limit=50, offset=0)['items']
+        for idx, item in enumerate(curGroup):
+            album = item['album']
+            val = album['name'] + ' - ' + album['artists'][0]['name']
+            results += [val]
+        if (len(curGroup) < 50):
+            break
+    
+    df = pd.DataFrame(results, columns=["Saved Albums: "]) 
+    pd.set_option('display.colheader_justify', 'left')
+    df.to_csv('getAlbums.csv', index=False)
+
+    b = pd.read_csv("getAlbums.csv")
+    b.to_html("Table4.htm")
+    html_file4 = b.to_html()
+    return html_file4
+
+
 
 def get_token():
     token_valid = False
